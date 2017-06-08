@@ -6,22 +6,22 @@ const ROCK = 0;
 const PAPER = 1;
 const SCISSORS = 2;
 
-const LOG = true;
+const LOG = false;
 
 const NUM_ACTIONS = 3;
 
 const oppStrategy = [0.3, 0.3, 0.4];
-
-// const regretSum = [0.0, 0.0, 0.0];
-// const strategy = [0.0, 0.0, 0.0];
-// const strategySum = [0.0, 0.0, 0.0];
-
 
 class RPSTrainer {
     constructor() {
         this.strategy = [0.0, 0.0, 0.0];
         this.regretSum = [0.0, 0.0, 0.0];
         this.strategySum = [0.0, 0.0, 0.0];
+
+        this.oppStrategy = [0.0, 0.0, 0.0];
+        this.oppRegretSum = [0.0, 0.0, 0.0];
+        this.oppStrategySum = [0.0, 0.0, 0.0];
+
     }
 
     getStrategy() {
@@ -30,16 +30,22 @@ class RPSTrainer {
                 this.strategy[i] = this.regretSum[i] > 0 ? this.regretSum[i] * 1.0 : 0.0;
                 normalizingSum += this.strategy[i];
             }
+
+            if (normalizingSum === 0) {
+                let randomStrat = getRandomStrat();
+                console.log('New random strat created: ', randomStrat)
+                this.strategy = randomStrat;
+                normalizingSum = 1;
+            }
+
             for (let i = 0; i < NUM_ACTIONS; i++) {
-                if (normalizingSum > 0) {
-                    this.strategy[i] /= normalizingSum;
-                } else {
-                    this.strategy[i] = 1.0 / NUM_ACTIONS;
-                }
+                this.strategy[i] /= normalizingSum;
                 this.strategySum[i] += this.strategy[i];
             }
+
             if(LOG){
                 console.log('-------- Entering getStrategy() --------')
+                console.log('Player stats:')
                 console.log('Regret sum: ', this.regretSum);
                 console.log('Strategy sum: ', this.strategySum);
                 console.log('Strategy: ', this.strategy);
@@ -48,6 +54,35 @@ class RPSTrainer {
             }
             return this.strategy;
         }
+    getOppStrategy() {
+        let normalizingSumOpp = 0;
+        for (let i = 0; i < NUM_ACTIONS; i++) {
+            this.oppStrategy[i] = this.oppRegretSum[i] > 0 ? this.oppRegretSum[i] * 1.0 : 0.0;
+            normalizingSumOpp += this.oppStrategy[i];
+        }
+        if (normalizingSumOpp === 0) {
+            let randomStrat = getRandomStrat();
+            console.log('New random strat created for opp: ', randomStrat)
+            this.oppStrategy = randomStrat;
+            normalizingSumOpp = 1;
+        }
+
+        for (let i = 0; i < NUM_ACTIONS; i++) {
+            this.oppStrategy[i] /= normalizingSumOpp;
+            this.oppStrategySum[i] += this.oppStrategy[i];
+        }
+
+        if(LOG){
+            console.log('-------- Entering getOppStrategy() --------')
+            console.log('Opp stats:')
+            console.log('Regret sum: ', this.oppRegretSum);
+            console.log('Strategy sum: ', this.oppStrategySum);
+            console.log('Strategy: ', this.oppStrategy);
+            console.log('Normalizing sum: ', normalizingSumOpp);
+            console.log('-------- Exiting getOppStrategy() --------')
+        }
+        return this.strategy;
+    }
         //Choose a R/P/S action at random based on given strategy
     getAction(strategy) {
         let rand = Math.random();
@@ -60,11 +95,14 @@ class RPSTrainer {
         }
         return i;
     }
+
     train(iterations) {
         let actionUtility = [];
-        let strategy, myAction, otherAction;
+        let oppActionUtility = [];
+        let strategy, oppStrategy, myAction, otherAction;
         for (let i = 0; i < iterations; i++) {
             strategy = this.getStrategy();
+            oppStrategy = this.getOppStrategy();
             myAction = this.getAction(strategy);
             otherAction = this.getAction(oppStrategy);
 
@@ -76,8 +114,13 @@ class RPSTrainer {
             actionUtility[otherAction === NUM_ACTIONS - 1 ? 0 : otherAction + 1] = 1;
             actionUtility[otherAction === 0 ? NUM_ACTIONS - 1 : otherAction - 1] = -1;
 
+            oppActionUtility[myAction] = 0;
+            oppActionUtility[myAction === NUM_ACTIONS - 1 ? 0 : myAction + 1] = 1;
+            oppActionUtility[myAction === 0 ? NUM_ACTIONS - 1 : myAction - 1] = -1;
+
             for (let j = 0; j < NUM_ACTIONS; j++) {
                 this.regretSum[j] += actionUtility[j] - actionUtility[myAction];
+                this.oppRegretSum[j] += oppActionUtility[j] - oppActionUtility[otherAction];
                 if(LOG){
                     console.log('-------- Entering train() --------')
                     console.log('Action in loop is: ', j);
@@ -92,6 +135,7 @@ class RPSTrainer {
             }
         }
     }
+
     getAverageStrategy() {
         let avgStrategy = [0.0, 0.0, 0.0];
         let normalizingSum = 0;
@@ -120,7 +164,15 @@ class RPSTrainer {
 
 }
 
+function getRandomStrat() {
+    let action1 = Math.random();
+    let action2 = Math.random();
+    let action3 = Math.random();
+    let sum = action1 + action2 + action3;
+    return [action1/sum, action2/sum, action3/sum];
+}
+
 
 const trainer = new RPSTrainer();
-trainer.train(1000)
+trainer.train(100000)
 console.log('Final average strat', trainer.getAverageStrategy());
