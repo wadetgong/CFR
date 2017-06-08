@@ -12,10 +12,6 @@ const NUM_ACTIONS = 3;
 
 const oppStrategy = [0.3, 0.3, 0.4];
 
-// const regretSum = [0.0, 0.0, 0.0];
-// const strategy = [0.0, 0.0, 0.0];
-// const strategySum = [0.0, 0.0, 0.0];
-
 
 class RPSTrainer {
     constructor() {
@@ -60,6 +56,7 @@ class RPSTrainer {
         }
         return i;
     }
+
     train(iterations) {
         let actionUtility = [];
         let strategy, myAction, otherAction;
@@ -122,5 +119,5 @@ class RPSTrainer {
 
 
 const trainer = new RPSTrainer();
-trainer.train(1000)
+trainer.train(10000)
 console.log('Final average strat', trainer.getAverageStrategy());

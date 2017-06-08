@@ -6,11 +6,9 @@ const ROCK = 0;
 const PAPER = 1;
 const SCISSORS = 2;
 
-const LOG = false;
+const LOG = true;
 
 const NUM_ACTIONS = 3;
-
-const oppStrategy = [0.3, 0.3, 0.4];
 
 class RPSTrainer {
     constructor() {
@@ -81,7 +79,7 @@ class RPSTrainer {
             console.log('Normalizing sum: ', normalizingSumOpp);
             console.log('-------- Exiting getOppStrategy() --------')
         }
-        return this.strategy;
+        return this.oppStrategy;
     }
         //Choose a R/P/S action at random based on given strategy
     getAction(strategy) {
@@ -174,5 +172,5 @@ function getRandomStrat() {
 
 
 const trainer = new RPSTrainer();
-trainer.train(100000)
+trainer.train(10000)
 console.log('Final average strat', trainer.getAverageStrategy());
